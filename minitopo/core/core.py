@@ -12,7 +12,7 @@ import threading
 """ Let 2 hours to complete the experiment """
 # This should be sufficient for the worst case topology (~0.10 Mbps to download 20 MB on single-path)
 THREAD_TIMEOUT = 7200
-MINITOPO_PROJECT = "minitopo-hbes"
+MINITOPO_PROJECT = "minitopo-experiment"
 TEST_DIR = ""
 
 
@@ -245,7 +245,7 @@ class ExperienceLauncher(object):
 
         self.cleanMininet(num)
         cmd = 'ssh -p ' + self.remotePorts[num] + ' ' + self.remoteHostnames[num] + \
-              ' "cd ' + kwargs["tmpfs"] + '; sudo ~/git/' + MINITOPO_PROJECT + '/src/mpPerf.py -x ' + os.path.basename(kwargs["xpAbsPath"]) + ' -t ' + \
+              ' "cd ' + kwargs["tmpfs"] + '; sudo ~/Desktop/rl_mpquic_scheduler/' + MINITOPO_PROJECT + '/src/mpPerf.py -x ' + os.path.basename(kwargs["xpAbsPath"]) + ' -t ' + \
               os.path.basename(kwargs["topoAbsPath"]) + '"'
         MinitopoCommand(num, self.remoteHostnames[num], self.remotePorts[num], cmd, kwargs["workingDir"], self.testOkList).run(timeout=THREAD_TIMEOUT)
 
