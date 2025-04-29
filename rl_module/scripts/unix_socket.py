@@ -3,22 +3,11 @@ import os
 import socket
 import struct
 import argparse
-import numpy as np
-from a3c.agent import A2CAgent
-from a3c.utils import ACTION_DIM, STATE_DIM, GAMMA, A_LR, C_LR
+from scripts.run_agent import infer_action  # 只引入推理方法
 
 SOCKET_PATH = "/tmp/mpquic_socket"
-MODEL_SAVE_PATH = "/home/server/Desktop/rl_scheduler_mpquic/models/actor_critic_final.pth"
-
 pathstatus_format = '10Q'
 pathstatus_size = struct.calcsize(pathstatus_format)
-
-# 初始化Agent
-agent = A2CAgent(state_dim=STATE_DIM, action_dim=ACTION_DIM, actor_lr=A_LR, critic_lr=C_LR, gamma=GAMMA)
-
-# 如果存在已保存模型，加载
-if os.path.exists(MODEL_SAVE_PATH):
-    agent.load_model(MODEL_SAVE_PATH)
 
 def handle_connection(conn):
     num_paths_data = conn.recv(4)
@@ -41,26 +30,11 @@ def handle_connection(conn):
             'FileComplete': ps[9]
         })
 
-    state = pathstatus_to_state(path_status)
-    action = agent.choose_action(state).argmax()
-
-    selected_path_id = path_status[action]['PathID']
+    # 直接调用推理方法，返回动作
+    selected_path_id = infer_action(path_status)
     conn.sendall(struct.pack('Q', selected_path_id))
 
-def pathstatus_to_state(path_status_list):
-    state = []
-    for path in path_status_list:
-        srtt = path['SRTT'] / 1000000.0
-        cwnd = path['CWND'] / 10000.0
-        queue = path['QueueSize'] / 10000.0
-        loss_rate = (path['Lost'] / max(1, path['Send'])) if path['Send'] > 0 else 0.0
-        state.extend([cwnd, srtt, queue, loss_rate])
-    return np.array(state)
-
 def main():
-    parser = argparse.ArgumentParser()
-    args = parser.parse_args()
-
     if os.path.exists(SOCKET_PATH):
         os.remove(SOCKET_PATH)
 
