@@ -17,13 +17,20 @@ def main():
     socket_thread = threading.Thread(target=socket_server.start, daemon=True)
     socket_thread.start()
 
+    episodes = 100
     # run Mininet enviroment
-    for episode in range(100):
-        episode += 1
+    for episode in range(1, episodes+1):
+        if episode <= episodes/3:
+            dynamic_level = 'l' # Low
+        elif episode <= 2 * episodes/3:
+            dynamic_level = 'm' # Medium
+        else:
+            dynamic_level = 'h' # High
 
-        mininet_env = MininetEnv()
+        mininet_env = MininetEnv(dynamic_level)
         mininet_env.start()
         mininet_env.close()
+        episode += 1
 
 if __name__ == '__main__':
     main()

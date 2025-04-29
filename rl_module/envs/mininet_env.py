@@ -23,13 +23,13 @@ class MininetEnv:
         """
         run Mininet topo for mpquic test
         """
-        # remove old Mininet logs
+        # Remove old Mininet logs
         if os.path.exists(self.fct_log):
             os.remove(self.fct_log)
         if os.path.exists(self.ofo_log):
             os.remove(self.ofo_log)
 
-        # run mininet topo
+        # Run mininet topo
         results_path = mininet_run(self.dynamic_level)
         self._read_metrics_log(results_path)
         self._set_file_complete()
