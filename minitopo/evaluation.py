@@ -107,7 +107,7 @@ def generateExperimentalDesignRandomTopos(nbMptcpTopos=10, pathsPerTopo=2, bandw
     return mptcpTopos
 
 
-def launchTests(times):
+def launchTests(times, dynamic_level):
     """ Notice that the loss must occur at time + 2 sec since the minitopo test waits for 2 seconds between launching the server and the client """
     # mptcpTopos = generateExperimentalDesignRandomTopos(nbMptcpTopos=200)
     # logging = open("topos_with_loss.log", 'w')
@@ -164,7 +164,6 @@ def launchTests(times):
     #     mptcpTopos_act.append(topology)
         
     # renyue: for mqtt test
-    dynamic_level = sys.argv[1] if len(sys.argv) > 1 else 'l'
     path_1_bandwidth_min, path_1_bandwidth_max = 40.00, 50.00 # wifi
     path_2_bandwidth_min, path_2_bandwidth_max = 5.00, 10.00 # 4G
     path_1_rtt, path_2_rtt = 30, 100
@@ -190,7 +189,7 @@ def launchTests(times):
     scheduler = 'rl_' + dynamic_level
     path_1_bandwidth = path_1_bandwidth_value
     path_1_delay = path_1_rtt
-    scenario = "mqtt"
+    scenario = "mpquic"
     print("--------------------------RENYUE----------------------")
     print("path 1 bandwidth: %.2f, rtt: %d, loss: %.2f" % (path_1_bandwidth, path_1_delay, loss_rate))
     print("path 2 bandwidth: %.2f, rtt: %d, loss: %.2f" % (path_2_bandwidth_value, path_2_rtt, loss_rate))
@@ -200,10 +199,14 @@ def launchTests(times):
         time.sleep(1)
 launchTests(times=1)
 
-from core.core import TEST_DIR
-from log_fct_ofo import log_fct, log_ofo, log_ofo_avg
-results_file_path = "/home/server/Desktop/rl_scheduler_for_mqtt/z_results/" + TEST_DIR + "/1/quic/1/quic_client.log"
-log_fct(results_file_path)
-log_ofo_avg(results_file_path)
-with open("/home/server/Desktop/rl_scheduler_for_mqtt/rl_module/log/flag.txt", "w") as f:
-    f.write("done")
+def run(dynamic_level):
+    from core.core import TEST_DIR
+    from log_fct_ofo import log_fct, log_ofo_avg, log_ofo_avg_nil
+
+    launchTests(times=1, dynamic_level=dynamic_level)
+    results_file_path = "/home/server/Desktop/rl_mpquic_scheduler/results/" + TEST_DIR + "/1/quic/1/quic_client.log"
+    fct = log_fct(results_file_path)
+    if fct == '6000':
+        log_ofo_avg_nil(10000)
+    else:
+        log_ofo_avg(results_file_path)

@@ -10,7 +10,6 @@ from a3c.agent import A2CAgent
 from a3c.utils import STATE_DIM, ACTION_DIM, GAMMA, A_LR, C_LR
 from envs.mininet_env import MPQUICEnv
 
-SOCKET_PATH = "/tmp/mpquic_socket"
 MODEL_SAVE_PATH = "/home/server/Desktop/rl_scheduler_mpquic/models/actor_critic_final.pth"
 REWARD_RECORD_PATH = "/home/server/Desktop/rl_scheduler_mpquic/log/rewards_record.json"
 
@@ -48,8 +47,6 @@ def train_infer(state, mode):
 
             action_probs = agent.choose_action(state)
             action = np.random.choice(len(action_probs), p=action_probs)
-
-            send_action(action)
 
             next_state = state
 
@@ -97,12 +94,6 @@ def train_infer(state, mode):
 
     env.close()
     print(f"[{mode.capitalize()}] Finished!")
-
-def send_action(action):
-    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    client.connect(SOCKET_PATH)
-    client.sendall(struct.pack('i', action))
-    client.close()
 
 def pathstatus_to_state(path_status_list):
     state = []

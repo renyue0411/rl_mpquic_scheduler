@@ -6,6 +6,9 @@ log_output_dir = '/home/server/Desktop/rl_scheduler_for_mqtt/rl_module/log/'
 
 def log_fct(quic_log_path):
     log_output_file = os.path.join(log_output_dir, 'fct.log')
+    found = False
+    written_content = ""
+
     with open(quic_log_path, 'r') as infile, open(log_output_file, 'a') as outfile:
         for line in infile:
             match = re.search(r'Completed all:\s*([\d.]+)(ms|s)', line)
@@ -14,11 +17,18 @@ def log_fct(quic_log_path):
                 unit = match.group(2)
                 if unit == 's':
                     value *= 1000
-                outfile.write(str(value) + "\n")
-    print("fct log success")
+                written_content = str(value)
+                outfile.write(written_content + "\n")
+                found = True
 
+        if not found:
+            written_content = str(6000)
+            outfile.write(written_content + "\n")
 
-def log_ofo(quic_log_path):
+    print("fct log success: " + written_content)
+    return written_content
+
+def log_ofo(pre_ofo, quic_log_path):
     log_output_file = os.path.join(log_output_dir, 'ofo.log')
     offsets = []
     pattern = re.compile(r'stream 7 receive frame offset (\d+) from path 0')
@@ -47,7 +57,11 @@ def log_ofo(quic_log_path):
         outfile.write(str(ofo_size) + "\n")
     print("ofo log success")
 
-
+def log_ofo_avg_nil(average_ofo):
+    log_output_file = os.path.join(log_output_dir, 'ofo.log')
+    with open(log_output_file, 'a') as outfile:
+        outfile.write(str(average_ofo) + "\n")
+    print("Nil ofo log success")
 
 def log_ofo_avg(log_path):
     log_output_file = os.path.join(log_output_dir, 'ofo.log')

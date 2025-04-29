@@ -1,13 +1,14 @@
 import os
 import socket
 import struct
-
-from scripts.train_infer import train_infer
+from train_infer import train_infer
+from a3c.utils import SOCKET_PATH
 
 class UnixSocketServer:
-    def __init__(self, socket_path, train_infer_func):
+    def __init__(self, module_mode, socket_path=SOCKET_PATH, train_infer_func=train_infer):
         self.socket_path = socket_path
         self.train_infer_func= train_infer_func
+        self.module_mode = module_mode
         self.pathstatus_format = '10Q'
         self.pathstatus_size = struct.calcsize(self.pathstatus_format)
     
@@ -48,5 +49,5 @@ class UnixSocketServer:
             })
 
         # 调用推理方法，返回动作
-        selected_path_id = self.train_infer_func(path_status)
+        selected_path_id = self.train_infer_func(self.module_mode, path_status)
         conn.sendall(struct.pack('Q', selected_path_id))
