@@ -1,76 +1,89 @@
 import os
-import socket
-import struct
-import json
 import numpy as np
-import torch
 
-from a2c import a2c_agent
+from a2c import a2c_agent, buffer
+from a2c.rewards import per_packet_reward, per_file_reward
+import envs.config as envs_config
+from envs.config import METRICS_DIR
 
-class EpisodeBuffer:
-    def __init__(self):
-        self.states = []
-        self.actions = []
-        self.rewards = []
-        self.next_states = []
-        self.dones = []
+episode = 1
 
-    def store(self, state, action_one_hot, reward, next_state, done=0.0):
-        self.states.append(state)
-        self.actions.append(action_one_hot)
-        self.rewards.append(reward)
-        self.next_states.append(next_state)
-        self.dones.append(done)
+def get_state(path_states):
+    state_list = []
+    for state in path_states:
+        state_list.extend([
+            state['CWND'],
+            state['QueueSize'],
+            state['Send'],
+            state['Retrans'],
+            state['Lost'],
+            state['Received'],
+        ])
+    return state_list
 
-    def finalize_episode(self, final_reward):
-        """Add final reward to the last step, and mark done = 1.0"""
-        if self.rewards:
-            self.rewards[-1] += final_reward
-            self.dones[-1] = 1.0
-
-    def is_ready(self):
-        return len(self.states) > 0
-
-    def clear(self):
-        self.states.clear()
-        self.actions.clear()
-        self.rewards.clear()
-        self.next_states.clear()
-        self.dones.clear()
-
-    def get_batch(self):
-        return (
-            self.states,
-            self.actions,
-            self.rewards,
-            self.next_states,
-            self.dones
-        )
-
-def train_infer(state, mode):
+def get_fct_ofo(episode):
     """
-    train or infer mode return action (selected path)
+    Get FCT and OFO from log file
     """
-    action_probs = a2c_agent.choose_action(state)
+    assert episode >= 1, "Episode number must be >= 1"
+    fct, ofo = 0, 0
+    fct_log = os.path.join(METRICS_DIR, "fct.log")
+    ofo_log = os.path.join(METRICS_DIR, "ofo.log")
+    with open(fct_log, 'r') as f:
+        lines = f.readlines()
+        if episode <= len(lines):
+            fct_line = lines[episode - 1].strip()
+            fct = float(fct_line)
+    with open(ofo_log, 'r') as f:
+        lines = f.readlines()
+        if episode <= len(lines):
+            ofo_line = lines[episode - 1].strip()
+            ofo = float(ofo_line)
+    return fct, ofo
+
+def train_infer(path_status_list, mode, agent=a2c_agent, buffer=buffer):
+    # 1. STATE BUILD
+    state = get_state(path_status_list)
+
+    # 2. ACTION SELECT
+    action_probs = agent.choose_action(state)
 
     if mode == 'train':
-        # 按概率采样动作
+        # select action by probs
         action = np.random.choice(len(action_probs), p=action_probs)
 
-        # 小奖励设计
-        small_reward = -np.sum(state[2::4])
+        # calculate reward per packet
+        small_reward = per_packet_reward(path_status_list)
 
-        # One-hot编码动作
-        action_one_hot = np.zeros_like(action_probs)
-        action_one_hot[action] = 1
+        # One-hot action incode
+        action_one_hot = np.eye(len(action_probs))[action]
 
-        return action, small_reward, action_one_hot
+        # record experience
+        next_state = state  # use current states while no next states
+        buffer.store(state, action_one_hot, small_reward, next_state)
+
+        # add reward per file while file tansfer complete once
+        if envs_config.FILE_COMPLETE_FLAG:
+            global episode
+            fct, ofo = get_fct_ofo(episode)
+            big_reward = per_file_reward(fct, ofo)
+            buffer.finalize_episode(big_reward)
+
+            # update model
+            states, actions, rewards, next_states, dones = buffer.get_batch()
+            agent.update(states, actions, rewards, next_states, dones)
+            buffer.clear()
+            print(f"[Train] Episode {episode} completed with reward: {big_reward:.2f}")
+            episode += 1
 
     elif mode == 'infer':
-        # 直接取最大概率的动作（贪婪）
-        action = np.argmax(action_probs)
-        return action
+        # select action by argmax
+        action = int(np.argmax(action_probs))
 
     else:
-        raise ValueError(f"[train_infer] Invalid mode: {mode}, must be 'train' or 'infer'")
+        raise ValueError(f"[Train_infer] Invalid mode: {mode}")
+
+    # 3. RETURN PATH ID
+    selected_path_id = path_status_list[action]['PathID']
+    return selected_path_id
 

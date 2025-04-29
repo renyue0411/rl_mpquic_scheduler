@@ -42,6 +42,7 @@ class A2CAgent:
         action_log_probs = torch.log((policy_dists + 1e-8) * actions).sum(dim=1)
         actor_loss = -(action_log_probs * td_error.detach()).mean()
 
+        print(f"[Update] Actor loss: {actor_loss.item():.4f}, Critic loss: {critic_loss.item():.4f}")
         return actor_loss, critic_loss
 
     def update(self, states, actions, rewards, next_states, dones):

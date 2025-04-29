@@ -1,7 +1,7 @@
 # a3c/utils.py
 
 # 状态空间维度
-STATE_DIM = 8  # 2条路径 × 每条4个特征
+STATE_DIM = 10  # 2条路径 × 每条4个特征
 
 # 动作空间维度
 ACTION_DIM = 2  # 选择哪条路径（例如path1/path2）

@@ -10,7 +10,7 @@ class UnixSocketServer:
         self.socket_path = socket_path
         self.module_mode = module_mode
         self.path_status = []
-        self.pathstatus_format = '10Q'
+        self.pathstatus_format = '9Q'
         self.pathstatus_size = struct.calcsize(self.pathstatus_format)
     
     def start(self):
@@ -45,7 +45,6 @@ class UnixSocketServer:
                 'Lost': ps[6],
                 'Received': ps[7],
                 'PacketSize': ps[8],
-                'FileComplete': ps[9]
             })
 
         # call train or infer, return action

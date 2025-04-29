@@ -157,4 +157,4 @@ def log_ofo_avg(log_path):
     average_ofo = sum(ofocallist) / completealltime if completealltime > 0 else 0.0
     with open(log_output_file, 'a') as outfile:
         outfile.write(str(average_ofo) + "\n")
-    print("[Log] Ofo log success")
+    print("[Log] Ofo log success" + str(average_ofo))
