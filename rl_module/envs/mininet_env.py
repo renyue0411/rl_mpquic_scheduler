@@ -1,8 +1,8 @@
 import os
 import subprocess
 
-import config
-from config import METRICS_DIR, RUN_PATH
+import rl_module.envs.config as config
+from rl_module.envs.config import METRICS_DIR, RUN_PATH
 
 
 class MininetEnv:

@@ -200,11 +200,11 @@ def launchTests(times, dynamic_level):
         time.sleep(1)
 
 def run(dynamic_level):
-    from core.core import TEST_DIR
+    import core.core as core
     from log_fct_ofo import log_fct, log_ofo_avg, log_ofo_avg_nil
 
     launchTests(times=1, dynamic_level=dynamic_level)
-    results_file_path = "/home/server/Desktop/rl_mpquic_scheduler/results/" + TEST_DIR + "/1/quic/1/quic_client.log"
+    results_file_path = "/home/server/Desktop/rl_mpquic_scheduler/" + core.TEST_DIR + "/1/quic/1/quic_client.log"
     fct = log_fct(results_file_path)
     if fct == '6000':
         log_ofo_avg_nil(10000)

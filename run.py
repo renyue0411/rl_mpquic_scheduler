@@ -30,7 +30,7 @@ def main():
     socket_thread = threading.Thread(target=socket_server.start, daemon=True)
     socket_thread.start()
 
-    episodes = 100
+    episodes = 300
     # run Mininet enviroment
     for episode in range(1, episodes+1):
         if episode <= episodes/3:
@@ -42,7 +42,7 @@ def main():
 
         mininet_env = MininetEnv(dynamic_level)
         mininet_env.start()
-        mininet_env.close()
+        # mininet_env.close()
 
         # save models once every 1/3 episodes
         if args.mode == 'train':

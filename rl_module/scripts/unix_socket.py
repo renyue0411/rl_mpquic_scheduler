@@ -2,14 +2,13 @@ import os
 import socket
 import struct
 
-from scripts.train_infer import train_infer
-from a2c.utils import SOCKET_PATH
+from rl_module.scripts.train_infer import train_infer
+from rl_module.a2c.utils import SOCKET_PATH
 
 class UnixSocketServer:
     def __init__(self, module_mode, socket_path=SOCKET_PATH):
         self.socket_path = socket_path
         self.module_mode = module_mode
-        self.path_status = []
         self.pathstatus_format = '9Q'
         self.pathstatus_size = struct.calcsize(self.pathstatus_format)
     
@@ -31,11 +30,12 @@ class UnixSocketServer:
     def handle_connection(self, conn):
         num_paths_data = conn.recv(4)
         num_paths = struct.unpack('<I', num_paths_data)[0]
+        path_status = []
 
         for _ in range(num_paths):
             data = conn.recv(self.pathstatus_size)
             ps = struct.unpack(self.pathstatus_format, data)
-            self.path_status.append({
+            path_status.append({
                 'PathID': ps[0],
                 'SRTT': ps[1],
                 'CWND': ps[2],
@@ -47,7 +47,8 @@ class UnixSocketServer:
                 'PacketSize': ps[8],
             })
 
+        print(f"[Unix socket] {path_status}")
         # call train or infer, return action
-        selected_path_id = train_infer(self.path_status, self.module_mode)
+        selected_path_id = train_infer(path_status, self.module_mode)
         print(f"[Unix socket] Selected path {selected_path_id}")
         conn.sendall(struct.pack('Q', selected_path_id))

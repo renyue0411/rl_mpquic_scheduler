@@ -1,10 +1,14 @@
 import os
 import numpy as np
 
-from a2c import a2c_agent, buffer
-from a2c.rewards import per_packet_reward, per_file_reward
-import envs.config as envs_config
-from envs.config import METRICS_DIR
+from rl_module.a2c import a2c_agent, buffer
+from rl_module.a2c.rewards import per_packet_reward, per_file_reward
+import rl_module.envs.config as envs_config
+from rl_module.envs.config import METRICS_DIR
+from rl_module.a2c.utils import REWARD_RECORD_PATH
+
+REWARD_PACKET_LOG = os.path.join(REWARD_RECORD_PATH, "reward_per_packet.log")
+REWARD_FILE_LOG = os.path.join(REWARD_RECORD_PATH, "reward_per_file.log")
 
 episode = 1
 
@@ -55,6 +59,10 @@ def train_infer(path_status_list, mode, agent=a2c_agent, buffer=buffer):
         # calculate reward per packet
         small_reward = per_packet_reward(path_status_list)
 
+        # log per-packet reward
+        with open(REWARD_PACKET_LOG, 'a') as f:
+            f.write(f"{small_reward}\n")
+
         # One-hot action incode
         action_one_hot = np.eye(len(action_probs))[action]
 
@@ -67,6 +75,11 @@ def train_infer(path_status_list, mode, agent=a2c_agent, buffer=buffer):
             global episode
             fct, ofo = get_fct_ofo(episode)
             big_reward = per_file_reward(fct, ofo)
+            
+            # log per-file reward
+            with open(REWARD_FILE_LOG, 'a') as f:
+                f.write(f"{big_reward}\n")
+
             buffer.finalize_episode(big_reward)
 
             # update model

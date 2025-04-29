@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 
-from a2c.model import ActorCritic
+from rl_module.a2c.model import ActorCritic
 
 class A2CAgent:
     def __init__(self, state_dim, action_dim, hidden_dim, actor_lr, critic_lr, gamma):
