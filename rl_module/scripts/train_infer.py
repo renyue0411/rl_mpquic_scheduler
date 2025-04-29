@@ -1,117 +1,76 @@
-# scripts/run_agent.py
 import os
 import socket
 import struct
 import json
-import argparse
 import numpy as np
 import torch
-from a3c.agent import A2CAgent
-from a3c.utils import STATE_DIM, ACTION_DIM, GAMMA, A_LR, C_LR
-from envs.mininet_env import MPQUICEnv
 
-MODEL_SAVE_PATH = "/home/server/Desktop/rl_scheduler_mpquic/models/actor_critic_final.pth"
-REWARD_RECORD_PATH = "/home/server/Desktop/rl_scheduler_mpquic/log/rewards_record.json"
+from a2c import a2c_agent
 
-TOPO_SCRIPT_PATH = "/home/server/Desktop/rl_scheduler_mpquic/scripts/your_mininet_topo.py"
-QUIC_CLIENT_PATH = "/home/server/Desktop/rl_scheduler_mpquic/scripts/your_quic_client.sh"
-LOG_DIR = "/home/server/Desktop/rl_scheduler_mpquic/log"
+class EpisodeBuffer:
+    def __init__(self):
+        self.states = []
+        self.actions = []
+        self.rewards = []
+        self.next_states = []
+        self.dones = []
 
-pathstatus_format = '10Q'
-pathstatus_size = 80
-num_episodes = 1000
+    def store(self, state, action_one_hot, reward, next_state, done=0.0):
+        self.states.append(state)
+        self.actions.append(action_one_hot)
+        self.rewards.append(reward)
+        self.next_states.append(next_state)
+        self.dones.append(done)
+
+    def finalize_episode(self, final_reward):
+        """Add final reward to the last step, and mark done = 1.0"""
+        if self.rewards:
+            self.rewards[-1] += final_reward
+            self.dones[-1] = 1.0
+
+    def is_ready(self):
+        return len(self.states) > 0
+
+    def clear(self):
+        self.states.clear()
+        self.actions.clear()
+        self.rewards.clear()
+        self.next_states.clear()
+        self.dones.clear()
+
+    def get_batch(self):
+        return (
+            self.states,
+            self.actions,
+            self.rewards,
+            self.next_states,
+            self.dones
+        )
 
 def train_infer(state, mode):
-    env = MPQUICEnv(TOPO_SCRIPT_PATH, QUIC_CLIENT_PATH, LOG_DIR)
-    agent = A2CAgent(state_dim=STATE_DIM, action_dim=ACTION_DIM, actor_lr=A_LR, critic_lr=C_LR, gamma=GAMMA)
+    """
+    train or infer mode return action (selected path)
+    """
+    action_probs = a2c_agent.choose_action(state)
 
-    if os.path.exists(MODEL_SAVE_PATH):
-        agent.load_model(MODEL_SAVE_PATH)
+    if mode == 'train':
+        # 按概率采样动作
+        action = np.random.choice(len(action_probs), p=action_probs)
+
+        # 小奖励设计
+        small_reward = -np.sum(state[2::4])
+
+        # One-hot编码动作
+        action_one_hot = np.zeros_like(action_probs)
+        action_one_hot[action] = 1
+
+        return action, small_reward, action_one_hot
+
     elif mode == 'infer':
-        raise FileNotFoundError("No trained model found for inference!")
+        # 直接取最大概率的动作（贪婪）
+        action = np.argmax(action_probs)
+        return action
 
-    all_rewards = []
+    else:
+        raise ValueError(f"[train_infer] Invalid mode: {mode}, must be 'train' or 'infer'")
 
-    for episode in range(1, num_episodes + 1):
-        env.reset()
-
-        episode_states = []
-        episode_actions = []
-        episode_rewards = []
-        episode_next_states = []
-        episode_dones = []
-
-        done = False
-
-        while not done:
-
-            action_probs = agent.choose_action(state)
-            action = np.random.choice(len(action_probs), p=action_probs)
-
-            next_state = state
-
-            # 小reward（这里只是简单示例）
-            small_reward = -np.sum(state[2::4])
-
-            action_one_hot = np.zeros_like(action_probs)
-            action_one_hot[action] = 1
-
-            if mode == 'train':
-                episode_states.append(state)
-                episode_actions.append(action_one_hot)
-                episode_rewards.append(small_reward)
-                episode_next_states.append(next_state)
-                episode_dones.append(0.0)
-
-            state = next_state
-
-            if check_file_complete(next_state):
-                env.wait_file_complete()
-
-                if mode == 'train':
-                    fct, loss, ofo = env.read_logs()
-                    big_reward = env.compute_file_reward(fct, loss, ofo)
-                    episode_rewards[-1] += big_reward
-                    episode_dones[-1] = 1.0
-
-                done = True
-
-        if mode == 'train':
-            agent.update(episode_states, episode_actions, episode_rewards, episode_next_states, episode_dones)
-            total_reward = sum(episode_rewards)
-            all_rewards.append(total_reward)
-
-            if episode % 10 == 0:
-                print(f"[Train] Episode {episode} Total reward: {total_reward:.4f}")
-
-            if episode % 100 == 0:
-                torch.save(agent.model.state_dict(), MODEL_SAVE_PATH)
-                with open(REWARD_RECORD_PATH, 'w') as f:
-                    json.dump(all_rewards, f)
-
-        else:
-            print(f"[Infer] Episode {episode} completed.")
-
-    env.close()
-    print(f"[{mode.capitalize()}] Finished!")
-
-def pathstatus_to_state(path_status_list):
-    state = []
-    for path in path_status_list:
-        srtt = path['SRTT'] / 1000000.0
-        cwnd = path['CWND'] / 10000.0
-        queue = path['QueueSize'] / 10000.0
-        loss_rate = (path['Lost'] / max(1, path['Send'])) if path['Send'] > 0 else 0.0
-        state.extend([cwnd, srtt, queue, loss_rate])
-    return np.array(state)
-
-def check_file_complete(state):
-    # 简化假设，根据你的实际PathStatus内容判断
-    return False  # 暂时留空，需要完善
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, choices=['train', 'infer'], required=True)
-    args = parser.parse_args()
-
-    run(args.mode)

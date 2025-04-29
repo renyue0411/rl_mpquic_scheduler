@@ -21,3 +21,6 @@ HIDDEN_DIM = 128
 
 SOCKET_PATH = "/tmp/mpquic_socket"
 EPISODES = 100
+
+MODEL_SAVE_PATH = "/home/server/Desktop/rl_mpquic_scheduler/models/"
+REWARD_RECORD_PATH = "/home/server/Desktop/rl_mpquic_scheduler/rl_module/log/rewards.json"

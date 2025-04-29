@@ -2,7 +2,7 @@ import os
 import re
 from collections import defaultdict
 
-log_output_dir = '/home/server/Desktop/rl_scheduler_for_mqtt/rl_module/log/'
+log_output_dir = '/home/server/Desktop/rl_mpquic_scheduler/rl_module/log/'
 
 def log_fct(quic_log_path):
     log_output_file = os.path.join(log_output_dir, 'fct.log')
@@ -25,7 +25,7 @@ def log_fct(quic_log_path):
             written_content = str(6000)
             outfile.write(written_content + "\n")
 
-    print("fct log success: " + written_content)
+    print("[Log] Fct log success: " + written_content)
     return written_content
 
 def log_ofo(pre_ofo, quic_log_path):
@@ -55,13 +55,13 @@ def log_ofo(pre_ofo, quic_log_path):
 
     with open(log_output_file, 'a') as outfile:
         outfile.write(str(ofo_size) + "\n")
-    print("ofo log success")
+    print("[Log] Ofo log success")
 
 def log_ofo_avg_nil(average_ofo):
     log_output_file = os.path.join(log_output_dir, 'ofo.log')
     with open(log_output_file, 'a') as outfile:
         outfile.write(str(average_ofo) + "\n")
-    print("Nil ofo log success")
+    print("[Log] Nil ofo log success")
 
 def log_ofo_avg(log_path):
     log_output_file = os.path.join(log_output_dir, 'ofo.log')
@@ -157,4 +157,4 @@ def log_ofo_avg(log_path):
     average_ofo = sum(ofocallist) / completealltime if completealltime > 0 else 0.0
     with open(log_output_file, 'a') as outfile:
         outfile.write(str(average_ofo) + "\n")
-    print("ofo log success")
+    print("[Log] Ofo log success")

@@ -2,6 +2,7 @@
 from __future__ import print_function
 import time
 from multiprocessing import Queue
+import argparse
 
 # Doing * imports is bad :'(
 from core.generate_topo import *
@@ -197,7 +198,6 @@ def launchTests(times, dynamic_level):
     for i in range(times):
         quicTests(mptcpTopos_mqtt_random, scheduler, str(path_1_bandwidth), str(path_1_delay), scenario)
         time.sleep(1)
-launchTests(times=1)
 
 def run(dynamic_level):
     from core.core import TEST_DIR
@@ -210,3 +210,11 @@ def run(dynamic_level):
         log_ofo_avg_nil(10000)
     else:
         log_ofo_avg(results_file_path)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Run MPQUIC test with dynamic level")
+    parser.add_argument('-d', '--dynamic_level', type=str, choices=['l', 'm', 'h'], required=True,
+                        help="Dynamic level: l (low), m (medium), h (high)")
+    args = parser.parse_args()
+
+    run(args.dynamic_level)

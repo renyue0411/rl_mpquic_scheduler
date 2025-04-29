@@ -1,10 +1,8 @@
 import os
-import time
-import numpy as np
+import subprocess
 
-from minitopo.evaluation import run as mininet_run
 import config
-from config import METRICS_DIR
+from config import METRICS_DIR, RUN_PATH
 
 
 class MininetEnv:
@@ -30,8 +28,12 @@ class MininetEnv:
             os.remove(self.ofo_log)
 
         # Run mininet topo
-        results_path = mininet_run(self.dynamic_level)
-        self._read_metrics_log(results_path)
+        print("[Mininet] Minitopo running")
+        subprocess.run(['python2.7',
+                        RUN_PATH,
+                        '-d',
+                        self.dynamic_level])
+        # One file transmission complete
         self._set_file_complete()
         return
 
@@ -40,9 +42,11 @@ class MininetEnv:
         Set (flag = True) that a file transmission complete
         """
         config.FILE_COMPLETE_FLAG = True
+        print("[Mininet] file transfer completed")
 
     def close(self):
         """
         Clean Mininet cache
         """
         os.system("sudo mn -c")
+        print("[Mininet] Cache cleand")

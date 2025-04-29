@@ -1,10 +1,9 @@
-# a3c/agent.py
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 
-from a3c.model import ActorCritic
+from a2c.model import ActorCritic
 
 class A2CAgent:
     def __init__(self, state_dim, action_dim, hidden_dim, actor_lr, critic_lr, gamma):
@@ -15,7 +14,7 @@ class A2CAgent:
 
     def choose_action(self, state):
         """
-        输入当前状态，输出动作概率分布
+        input current states, output probs
         """
         state_tensor = torch.FloatTensor(state).unsqueeze(0)
         with torch.no_grad():
@@ -24,7 +23,7 @@ class A2CAgent:
 
     def compute_loss(self, states, actions, rewards, next_states, dones):
         """
-        分别计算Actor Loss 和 Critic Loss
+        Calculate Actor Loss and Critic Loss
         """
         states = torch.FloatTensor(states)
         next_states = torch.FloatTensor(next_states)
@@ -47,7 +46,7 @@ class A2CAgent:
 
     def update(self, states, actions, rewards, next_states, dones):
         """
-        用一批数据更新一次Actor和Critic参数
+        Update parameters of Actor and Critic using new states
         """
         actor_loss, critic_loss = self.compute_loss(states, actions, rewards, next_states, dones)
 
