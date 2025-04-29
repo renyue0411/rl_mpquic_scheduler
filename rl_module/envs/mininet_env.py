@@ -3,7 +3,7 @@ import os
 import time
 import numpy as np
 
-class MPQUICEnv:
+class MininetEnv:
     def __init__(self, topo_script_path, quic_client_path, log_dir):
         """
         初始化环境

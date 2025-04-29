@@ -22,7 +22,7 @@ pathstatus_format = '10Q'
 pathstatus_size = 80
 num_episodes = 1000
 
-def run(mode):
+def train_infer(state, mode):
     env = MPQUICEnv(TOPO_SCRIPT_PATH, QUIC_CLIENT_PATH, LOG_DIR)
     agent = A2CAgent(state_dim=STATE_DIM, action_dim=ACTION_DIM, actor_lr=A_LR, critic_lr=C_LR, gamma=GAMMA)
 
@@ -45,14 +45,13 @@ def run(mode):
         done = False
 
         while not done:
-            state = receive_path_status()
 
             action_probs = agent.choose_action(state)
             action = np.random.choice(len(action_probs), p=action_probs)
 
             send_action(action)
 
-            next_state = receive_path_status()
+            next_state = state
 
             # 小reward（这里只是简单示例）
             small_reward = -np.sum(state[2::4])
@@ -98,33 +97,6 @@ def run(mode):
 
     env.close()
     print(f"[{mode.capitalize()}] Finished!")
-
-def receive_path_status():
-    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    client.connect(SOCKET_PATH)
-
-    num_paths_data = client.recv(4)
-    num_paths = struct.unpack('<I', num_paths_data)[0]
-
-    path_status = []
-    for _ in range(num_paths):
-        data = client.recv(pathstatus_size)
-        ps = struct.unpack(pathstatus_format, data)
-        path_status.append({
-            'PathID': ps[0],
-            'SRTT': ps[1],
-            'CWND': ps[2],
-            'QueueSize': ps[3],
-            'Send': ps[4],
-            'Retrans': ps[5],
-            'Lost': ps[6],
-            'Received': ps[7],
-            'PacketSize': ps[8],
-            'FileComplete': ps[9]
-        })
-
-    client.close()
-    return pathstatus_to_state(path_status)
 
 def send_action(action):
     client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

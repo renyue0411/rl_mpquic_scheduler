@@ -18,3 +18,6 @@ HIDDEN_DIM = 128
 
 # 其他（可以根据需要再补充）
 # 比如最大episode数量，batch_size等等
+
+SOCKET_PATH = "/tmp/mpquic_socket"
+EPISODES = 100
