@@ -4,10 +4,10 @@ import threading
 import torch
 import os
 
-from scripts.unix_socket import UnixSocketServer
-from envs.mininet_env import MininetEnv
-from a2c import a2c_agent
-from a2c.utils import MODEL_SAVE_PATH
+from rl_module.scripts.unix_socket import UnixSocketServer
+from rl_module.envs.mininet_env import MininetEnv
+from rl_module.a2c import a2c_agent
+from rl_module.a2c.utils import MODEL_SAVE_PATH
 
 def main():
     parser = argparse.ArgumentParser(description="Train or Infer A2C agent for MPQUIC scheduling")
