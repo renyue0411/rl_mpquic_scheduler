@@ -206,8 +206,8 @@ def run(dynamic_level):
     launchTests(times=1, dynamic_level=dynamic_level)
     results_file_path = "/home/server/Desktop/rl_mpquic_scheduler/" + core.TEST_DIR + "/1/quic/1/quic_client.log"
     fct = log_fct(results_file_path)
-    if fct == '6000':
-        log_ofo_avg_nil(10000)
+    if fct == '2000':
+        log_ofo_avg_nil(100)
     else:
         log_ofo_avg(results_file_path)
 
@@ -218,3 +218,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     run(args.dynamic_level)
+    time.sleep(5)

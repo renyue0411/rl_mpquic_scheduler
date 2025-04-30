@@ -18,19 +18,19 @@ def main():
 
     # load model in infer mode
     if args.mode == 'infer':
-        model_path = MODEL_SAVE_PATH + "actor_critic_final.pth"
-        if os.path.exists(model_path):
-            a2c_agent.load_model(model_path)
-            print(f"[Main] Loaded model from {model_path}")
+        model_save_path = os.path.join(MODEL_SAVE_PATH, "actor_critic_final.pth")
+        if os.path.exists(model_save_path):
+            a2c_agent.load_model(model_save_path)
+            print(f"[Main] Loaded model from {model_save_path}")
         else:
-            raise FileNotFoundError(f"[Main] No model found at {model_path}")
+            raise FileNotFoundError(f"[Main] No model found at {model_save_path}")
 
     # create a thread of socket server for receive path states from quic-go
     socket_server = UnixSocketServer(module_mode=args.mode)
     socket_thread = threading.Thread(target=socket_server.start, daemon=True)
     socket_thread.start()
 
-    episodes = 300
+    episodes = 3
     # run Mininet enviroment
     for episode in range(1, episodes+1):
         if episode <= episodes/3:
@@ -47,14 +47,14 @@ def main():
         # save models once every 1/3 episodes
         if args.mode == 'train':
             if episode % (episodes // 3) == 0 or episode == episodes:
-                model_save_path = MODEL_SAVE_PATH + f"actor_critic_ep{episode}.pth"
-                torch.save(a2c_agent.model.state_dict(), model_save_path)
+                model_save_path = os.path.join(MODEL_SAVE_PATH, f"actor_critic_ep{episode}.pth")
+                a2c_agent.save_model(model_save_path)
                 print(f"[Main] Model saved at episode {episode}")
 
     # save final model after train
     if args.mode == 'train':
-        model_save_path = MODEL_SAVE_PATH + "actor_critic_final.pth"
-        torch.save(a2c_agent.model.state_dict(), model_save_path)
+        model_save_path = os.path.join(MODEL_SAVE_PATH, "actor_critic_final.pth")
+        a2c_agent.save_model(model_save_path)
         print(f"[Main] Final model saved")
         
 if __name__ == '__main__':

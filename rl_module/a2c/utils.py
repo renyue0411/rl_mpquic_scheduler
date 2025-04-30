@@ -14,8 +14,10 @@ C_LR = 1e-3  # Critic
 # nn layers
 HIDDEN_DIM = 128
 
+TEMP = 5
+
 SOCKET_PATH = "/tmp/mpquic_socket"
 EPISODES = 100
 
-MODEL_SAVE_PATH = "/home/server/Desktop/rl_mpquic_scheduler/models/"
+MODEL_SAVE_PATH = "/home/server/Desktop/rl_mpquic_scheduler/rl_module/models"
 REWARD_RECORD_PATH = "/home/server/Desktop/rl_mpquic_scheduler/rl_module/log"

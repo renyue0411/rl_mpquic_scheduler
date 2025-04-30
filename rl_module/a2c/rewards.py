@@ -18,7 +18,7 @@ def per_packet_reward(path_status_list):
     packet_size = path_status_list[0]['PacketSize']
 
     cwnd_utilization = ((send_total - received_total) * packet_size) / max(1, cwnd_total)
-    queue_size = queue_total / 20000
+    queue_size = queue_total / 10000
     loss_rate = (lost_total + retrans_total) / max(1, (lost_total + retrans_total + send_total))
     reward = -(
         QUEUE_WEIGHT * queue_size +
@@ -32,7 +32,7 @@ def per_file_reward(fct, ofo):
     calculate reward per file by file complete time and out-of-order bytes
     """
     reward = -(
-        FCT_WEIGHT * fct +
-        OFO_WEIGHT * ofo
+        FCT_WEIGHT * (fct/100) +
+        OFO_WEIGHT * (ofo/100)
     )
     return reward

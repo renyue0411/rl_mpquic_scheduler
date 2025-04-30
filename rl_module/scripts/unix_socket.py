@@ -2,15 +2,17 @@ import os
 import socket
 import struct
 
-from rl_module.scripts.train_infer import train_infer
+from rl_module.scripts.train_infer import A2CTrainer
+from rl_module.a2c import a2c_agent, buffer
 from rl_module.a2c.utils import SOCKET_PATH
 
 class UnixSocketServer:
-    def __init__(self, module_mode, socket_path=SOCKET_PATH):
+    def __init__(self, module_mode, socket_path=SOCKET_PATH, agent=a2c_agent, buffer=buffer):
         self.socket_path = socket_path
         self.module_mode = module_mode
         self.pathstatus_format = '9Q'
         self.pathstatus_size = struct.calcsize(self.pathstatus_format)
+        self.trainer = A2CTrainer(agent=agent, buffer=buffer)
     
     def start(self):
         # run UNIX socket sever
@@ -47,8 +49,13 @@ class UnixSocketServer:
                 'PacketSize': ps[8],
             })
 
-        print(f"[Unix socket] {path_status}")
+        # print(f"[Unix socket] Received {num_paths} path states.")
+        # for ps in path_status:
+        #     print(f" → PathID {ps['PathID']}, CWND {ps['CWND']}, RTT {ps['SRTT']}, Queue {ps['QueueSize']}, Loss {(ps['Retrans'] + ps['Lost']) / max(1, ps['Retrans'] + ps['Lost'] + ps['Send']):.2f}, Received {ps['Received']}")
         # call train or infer, return action
-        selected_path_id = train_infer(path_status, self.module_mode)
-        print(f"[Unix socket] Selected path {selected_path_id}")
+        if self.module_mode == "train":
+            selected_path_id = self.trainer.train_step(path_status)
+        elif self.module_mode == "infer":
+            selected_path_id = self.trainer.infer_step(path_status)
+        # print(f"[Unix socket] Selected path {selected_path_id}")
         conn.sendall(struct.pack('Q', selected_path_id))

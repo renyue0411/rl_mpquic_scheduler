@@ -22,7 +22,7 @@ def log_fct(quic_log_path):
                 found = True
 
         if not found:
-            written_content = str(6000)
+            written_content = str(2000)
             outfile.write(written_content + "\n")
 
     print("[Log] Fct log success: " + written_content)

@@ -1,5 +1,6 @@
 import os
 import subprocess
+import time
 
 import rl_module.envs.config as config
 from rl_module.envs.config import METRICS_DIR, RUN_PATH
@@ -21,28 +22,22 @@ class MininetEnv:
         """
         run Mininet topo for mpquic test
         """
-        # Remove old Mininet logs
-        if os.path.exists(self.fct_log):
-            os.remove(self.fct_log)
-        if os.path.exists(self.ofo_log):
-            os.remove(self.ofo_log)
-
         # Run mininet topo
         print("[Mininet] Minitopo running")
         subprocess.run(['python2.7',
                         RUN_PATH,
                         '-d',
                         self.dynamic_level])
-        # One file transmission complete
-        self._set_file_complete()
+        # File transfer complete
+        config.set_file_complete_flag(True)
+        print(f"[Mininet] file transfer completed, status: {config.FILE_COMPLETE_FLAG}")
         return
 
-    def _set_file_complete(self):
+    def _set_file_status(self, status):
         """
-        Set (flag = True) that a file transmission complete
+        Set (flag = True or Flase) that a file transmission status
         """
-        config.FILE_COMPLETE_FLAG = True
-        print("[Mininet] file transfer completed")
+        config.FILE_COMPLETE_FLAG = status
 
     def close(self):
         """

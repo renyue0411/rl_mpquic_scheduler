@@ -1,4 +1,3 @@
-# log/plot_rewards.py
 import matplotlib.pyplot as plt
 import json
 import os
@@ -21,8 +20,8 @@ def plot_rewards(reward_record_path, save_plot_path):
     plt.show()
 
 if __name__ == '__main__':
-    base_dir = "/home/server/Desktop/rl_scheduler_mpquic"
-    reward_record_path = os.path.join(base_dir, "log", "rewards_record.json")
+    base_dir = "/home/server/Desktop/rl_scheduler_mpquic/rl_module"
+    reward_path = os.path.join(base_dir, "log", "reward_per_file.json")
     save_plot_path = os.path.join(base_dir, "log", "reward_curve.png")
 
-    plot_rewards(reward_record_path, save_plot_path)
+    plot_rewards(reward_path, save_plot_path)
